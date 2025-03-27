@@ -66,7 +66,7 @@ function App() {
 
   const fetchCWE = async (cweId: string) => {
     try {
-      const response = await axios.get(`http://cveexplorer.fly.dev/api/cwe/${cweId}`)
+      const response = await axios.get(`https://cveexplorer.fly.dev/api/cwe/${cweId}`)
       if (response.data) {
         setCweData(prev => [...prev, response.data])
       }
@@ -78,7 +78,7 @@ function App() {
   
   const fetchCAPEC = async (capecId: string) => {
     try {
-      const response = await axios.get(`http://cveexplorer.fly.dev/api/capec/${capecId}`)
+      const response = await axios.get(`https://cveexplorer.fly.dev/api/capec/${capecId}`)
       if (response.data) {
         setCapecData(prev => ({
           ...prev,
@@ -99,7 +99,7 @@ function App() {
     setCapecData({})
     
     try {
-      const response = await axios.get(`http://cveexplorer.fly.dev/api/cve/${cveId}`)
+      const response = await axios.get(`https://cveexplorer.fly.dev/api/cve/${cveId}`)
       if (response.data.vulnerabilities && response.data.vulnerabilities.length > 0) {
         setCveData(response.data.vulnerabilities[0].cve)
         // Fetch CAPEC data for each CWE
