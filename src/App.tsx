@@ -3,7 +3,7 @@ import axios from 'axios'
 
 interface CVE {
   id: string;
-  description: string;
+  descriptions: { lang:string; value:string;}[];
   references: {
     url: string;
     source: string;
@@ -11,10 +11,13 @@ interface CVE {
   }[];
   metrics: {
     cvssMetricV31: {
-      baseScore: number;
-      baseSeverity: string;
-      vectorString: string;
-    };
+      source: string;
+      cvssData: {
+        baseScore: number;
+        baseSeverity: string;
+        vectorString: string;
+      };
+    }[];
   };
   weaknesses: {
     source: string;
@@ -97,20 +100,27 @@ function App() {
               
               <div className="mb-8">
                 <h3 className="text-xl font-semibold text-blue-800 mb-3">Description</h3>
-                <p className="text-gray-700 leading-relaxed">{cveData.description}</p>
+                <p className="text-gray-700 leading-relaxed">{cveData.descriptions[cveData.descriptions.findIndex(element => element.lang === 'en')].value}</p>
               </div>
 
               <div className="mb-8">
-                <h3 className="text-xl font-semibold text-blue-800 mb-4">CVSS Score</h3>
+                <h3 className="text-xl font-semibold text-blue-800 mb-4">CVSS Scores</h3>
                 <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
-                  <div className="flex items-center gap-4">
-                    <div className="text-4xl font-bold text-blue-600">
-                      {cveData.metrics.cvssMetricV31.baseScore}
+                  {cveData.metrics.cvssMetricV31.map((metric, index) => (
+                  <div className="grid grid-cols-5 items-center gap-4">
+                    <div className="text-4xl col-span-1 text-right font-bold text-blue-600">
+                      {metric.cvssData.baseScore}
                     </div>
-                    <div className="text-sm text-blue-600">
-                      Vector: {cveData.metrics.cvssMetricV31.vectorString}
+                    <div className="text-sm col-span-4 text-blue-600">
+                      Vector: {metric.cvssData.vectorString}<br/>
+                      Source: {metric.source}
                     </div>
+                    { index < cveData.metrics.cvssMetricV31.length - 1 && (
+                      <hr className="col-span-5 mb-4 border-blue-200"></hr>
+                    )}
                   </div>
+                  ))
+                }
                 </div>
               </div>
 
