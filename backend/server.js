@@ -49,7 +49,7 @@ app.get('/api/cwe/:id', async (req, res) => {
     const transformedData = {
       id: req.params.id,
       name: $('h2').first().text().trim(),
-      description: $('div#content div.description').text().trim(),
+      description: $('div#Description .indent').text().trim(),
       related_attack_patterns: [],
       mitigations: [],
       examples: []
@@ -58,7 +58,6 @@ app.get('/api/cwe/:id', async (req, res) => {
     // Extract related attack patterns
     $('div#Related_Attack_Patterns tr').each((i, elem) => {
       const text = $(elem).find('a').eq(0).text().trim();
-      console.error("text: ", text);
       const capecMatch = text.match(/CAPEC-(\d+)/);
       if (capecMatch) {
         transformedData.related_attack_patterns.push({
@@ -69,10 +68,7 @@ app.get('/api/cwe/:id', async (req, res) => {
         });
       }
 
-
-
     });
-    console.error("transformedData: ", transformedData);
     // Extract mitigations
     $('div#content div.mitigations ul li').each((i, elem) => {
       transformedData.mitigations.push($(elem).text().trim());
@@ -124,8 +120,6 @@ app.get('/api/capec/:capecId', async (req, res) => {
         prerequisites: []
       };
 
-      
-      console.log("transformedData: ", transformedData);
       res.json(transformedData);
     
   } catch (error) {

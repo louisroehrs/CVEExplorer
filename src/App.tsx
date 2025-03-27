@@ -165,7 +165,9 @@ function App() {
           {cveData && (
             <div className="bg-white rounded-xl shadow-lg p-8">
               <div className="flex items-center justify-between mb-8">
-                <h2 className="text-3xl font-bold text-blue-900">{cveData.id}</h2>
+                <h2 className="text-3xl font-bold text-blue-900">
+                  <a href={`https://nvd.nist.gov/vuln/detail/${cveData.id}`} target="_blank" > {cveData.id}</a>
+                </h2>
                 <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-medium">
                   {cveData.metrics.cvssMetricV31[0].cvssData.baseSeverity}
                 </div>
@@ -184,10 +186,14 @@ function App() {
                       <div className="text-4xl col-span-1 text-right font-bold text-blue-600">
                         {metric.cvssData.baseScore}
                       </div>
-                      <div className="text-sm col-span-7 text-blue-600">
+                      <div className="text-sm col-span-5 text-blue-600">
                         Vector: {metric.cvssData.vectorString}<br/>
                         Source: {metric.source}
                       </div>
+                      <div className="text-sm col-span-2 text-blue-600">
+                        <a href={`https://nvd.nist.gov/vuln/detail/${cveData.id}`} target="_blank" > CVSS for {cveData.id}</a>
+                      </div>
+
                       {index < cveData.metrics.cvssMetricV31.length - 1 && (
                         <hr className="col-span-5 mb-4 border-blue-200" />
                       )}
@@ -208,6 +214,7 @@ function App() {
                             <p className="text-blue-700 font-medium">
                               <a href={`https://cwe.mitre.org/data/definitions/${cwe.value.replace("CWE-", "")}.html`} target="_blank" rel="noopener noreferrer">{cweData.find(cweEntry => cweEntry.id === cwe.value)?.name}</a>
                             </p>
+                            {cweData.find(cweEntry => cweEntry.id === cwe.value)?.description}
                             {cweData.find(cweEntry => cweEntry.id === cwe.value)?.related_attack_patterns.map((pattern, idx) => (
                               <div key={idx} className="mt-3 pl-4 border-l-2 border-blue-200">
                                 { idx === 0 && <h4 className="text-blue-800 font-medium mb-2">CAPEC Information</h4>}
