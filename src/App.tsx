@@ -28,22 +28,95 @@ interface CVE {
   }[];
 }
 
+interface CWE {
+  id: string;
+  value: string;
+  name: string;
+  description: string;
+  related_attack_patterns: {
+    id: string;
+    description: string;
+    url: string;
+    attackpattern_name: string;
+  }[];
+  mitigations: string[];
+  examples: string[];
+}
+
+interface CAPEC {
+  id: string;
+  name: string;
+  description: string;
+  typical_severity: string;
+  typical_likelihood_of_exploit: string;
+  resources_required: string;
+  execution_flow: string[];
+  prerequisites: string[];
+  url: string;
+  attackpattern_name: string;
+}
+
 function App() {
   const [cveId, setCveId] = useState('')
   const [cveData, setCveData] = useState<CVE | null>(null)
+  const [cweData, setCweData] = useState<CWE[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [capecData, setCapecData] = useState<{ [key: string]: CAPEC }>({})
+
+  const fetchCWE = async (cweId: string) => {
+    try {
+      const response = await axios.get(`http://localhost:3001/api/cwe/${cweId}`)
+      if (response.data) {
+        setCweData(prev => [...prev, response.data])
+      }
+      return response.data
+    } catch (err) {
+      console.error('Error fetching CWE data:', err)
+    }
+  }
+  
+  const fetchCAPEC = async (capecId: string) => {
+    try {
+      const response = await axios.get(`http://localhost:3001/api/capec/${capecId}`)
+      if (response.data) {
+        setCapecData(prev => ({
+          ...prev,
+          [capecId]: response.data
+        }))
+      }
+    } catch (err) {
+      console.error('Error fetching CAPEC data:', err)
+    }
+  }
 
   const searchCVE = async () => {
     if (!cveId) return
     
     setLoading(true)
     setError('')
+    setCweData([])
+    setCapecData({})
     
     try {
       const response = await axios.get(`http://localhost:3001/api/cve/${cveId}`)
       if (response.data.vulnerabilities && response.data.vulnerabilities.length > 0) {
         setCveData(response.data.vulnerabilities[0].cve)
+        // Fetch CAPEC data for each CWE
+        for (const weakness of response.data.vulnerabilities[0].cve.weaknesses) {
+          for (const cwe of weakness.description) {
+            try {
+              const cweData = await fetchCWE(cwe.value)
+              if (cweData?.related_attack_patterns?.length > 0) {
+                cweData.related_attack_patterns.forEach((attackPattern: { id: string }) => {
+                  fetchCAPEC(attackPattern.id)
+                })
+              }
+            } catch (err) {
+              console.error('Error fetching CWE data:', err)
+            }
+          }
+        }
       } else {
         setError('CVE not found')
       }
@@ -68,7 +141,7 @@ function App() {
             <input
               type="text"
               value={cveId}
-              onChange={(e) => setCveId(e.target.value)}
+              onChange={(e) => setCveId(e.target.value.toUpperCase())}
               placeholder="Enter CVE ID (e.g., CVE-2024-0001)"
               className="flex-1 px-6 py-3 border-2 border-blue-100 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
             />
@@ -94,7 +167,7 @@ function App() {
               <div className="flex items-center justify-between mb-8">
                 <h2 className="text-3xl font-bold text-blue-900">{cveData.id}</h2>
                 <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-medium">
-                  {cveData.metrics.cvssMetricV31.baseSeverity}
+                  {cveData.metrics.cvssMetricV31[0].cvssData.baseSeverity}
                 </div>
               </div>
               
@@ -107,20 +180,19 @@ function App() {
                 <h3 className="text-xl font-semibold text-blue-800 mb-4">CVSS Scores</h3>
                 <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
                   {cveData.metrics.cvssMetricV31.map((metric, index) => (
-                  <div className="grid grid-cols-5 items-center gap-4">
-                    <div className="text-4xl col-span-1 text-right font-bold text-blue-600">
-                      {metric.cvssData.baseScore}
+                    <div key={index} className="grid grid-cols-8 items-center gap-4">
+                      <div className="text-4xl col-span-1 text-right font-bold text-blue-600">
+                        {metric.cvssData.baseScore}
+                      </div>
+                      <div className="text-sm col-span-7 text-blue-600">
+                        Vector: {metric.cvssData.vectorString}<br/>
+                        Source: {metric.source}
+                      </div>
+                      {index < cveData.metrics.cvssMetricV31.length - 1 && (
+                        <hr className="col-span-5 mb-4 border-blue-200" />
+                      )}
                     </div>
-                    <div className="text-sm col-span-4 text-blue-600">
-                      Vector: {metric.cvssData.vectorString}<br/>
-                      Source: {metric.source}
-                    </div>
-                    { index < cveData.metrics.cvssMetricV31.length - 1 && (
-                      <hr className="col-span-5 mb-4 border-blue-200"></hr>
-                    )}
-                  </div>
-                  ))
-                }
+                  ))}
                 </div>
               </div>
 
@@ -132,10 +204,43 @@ function App() {
                       <div key={index} className="bg-blue-50 p-6 rounded-xl border border-blue-100">
                         <p className="font-medium text-blue-900 mb-3">{weakness.source}</p>
                         {weakness.description.map((cwe, cweIndex) => (
-                          <div key={cweIndex} className="mt-2">
-                            <p className="text-blue-700">
-                              <span className="font-medium">CWE-{cwe.value}:</span> {cwe.value}
+                          <div key={cweIndex} className="mt-4">
+                            <p className="text-blue-700 font-medium">
+                              <a href={`https://cwe.mitre.org/data/definitions/${cwe.value.replace("CWE-", "")}.html`} target="_blank" rel="noopener noreferrer">{cweData.find(cweEntry => cweEntry.id === cwe.value)?.name}</a>
                             </p>
+                            {cweData.find(cweEntry => cweEntry.id === cwe.value)?.related_attack_patterns.map((pattern, idx) => (
+                              <div key={idx} className="mt-3 pl-4 border-l-2 border-blue-200">
+                                { idx === 0 && <h4 className="text-blue-800 font-medium mb-2">CAPEC Information</h4>}
+                                {capecData[pattern.id] && (
+                                  <div className="space-y-2 text-sm">
+                                    <p><a href={capecData[pattern.id].url} target="_blank" rel="noopener noreferrer"><b>{capecData[pattern.id].name}</b></a></p>
+                                    <p><span className="font-medium">Description:</span> {capecData[pattern.id].description}</p>
+                                    <p><span className="font-medium">Severity:</span> {capecData[pattern.id].typical_severity}</p>
+                                    <p><span className="font-medium">Likelihood:</span> {capecData[pattern.id].typical_likelihood_of_exploit}</p>
+                                    {capecData[pattern.id].prerequisites.length > 0 && (
+                                      <div>
+                                        <span className="font-medium">Prerequisites:</span>
+                                        <ul className="list-disc list-inside ml-2">
+                                          {capecData[pattern.id].prerequisites.map((prereq, idx) => (
+                                            <li key={idx}>{prereq}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                    {capecData[pattern.id].execution_flow.length > 0 && (
+                                      <div>
+                                        <span className="font-medium">Execution Flow:</span>
+                                        <ul className="list-disc list-inside ml-2">
+                                          {capecData[pattern.id].execution_flow.map((step, idx) => (
+                                            <li key={idx}>{step}</li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            ))}
                           </div>
                         ))}
                       </div>
