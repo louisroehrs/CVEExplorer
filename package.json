@@ -2,14 +2,16 @@
   "name": "cveexplorer",
   "version": "1.0.0",
   "description": "CVE Explorer with CAPEC integration",
-  "main": "backend/server.js",
+  "main": "api/server.js",
+  "type": "module",
   "scripts": {
-    "start": "node backend/server.js",
-    "dev": "concurrently \"cd client && npm run dev\" \"cd backend && nodemon server.js\"",
+    "start": "node api/server.js",
+    "dev": "concurrently \"cd client && npm run dev\" \"cd api && nodemon server.js\"",
     "build": "cd client && npm run build",
     "install-all": "npm install && cd client && npm install"
   },
   "dependencies": {
+    "@tailwindcss/vite": "^4.0.17",
     "axios": "^1.6.7",
     "cheerio": "^1.0.0-rc.12",
     "cors": "^2.8.5",
@@ -19,4 +21,4 @@
     "concurrently": "^8.2.2",
     "nodemon": "^3.0.3"
   }
-} 
+}

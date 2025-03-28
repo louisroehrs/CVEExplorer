@@ -1,114 +1,90 @@
-const express = require('express');
-const cors = require('cors');
-const axios = require('axios');
-const cheerio = require('cheerio');
+import express from 'express';
+import cors from 'cors';
+import axios from 'axios';
+import * as cheerio from 'cheerio';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const port = process.env.PORT || 3001;
 
-if (process.env.NODE_ENV === 'production') {
-  // Serve built static files
-  app.use(express.static(path.resolve(__dirname, 'dist')));
-  app.get('*', (req, res) => {
-    res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
-  });
-} else {
-  // Use Vite dev server as middleware for hot reload
-  const { createServer: createViteServer } = await import('vite');
-  const vite = await createViteServer({
-    server: { middlewareMode: 'html' }
-  });
-
-  app.use(vite.middlewares);
+// Enable CORS in development
+if (process.env.NODE_ENV !== 'production') {
+  app.use(cors());
 }
 
-// Fallback to index.html for SPA routes
-app.get('*', (req, res) => {
-  res.sendFile(path.resolve(distPath, 'client/src/index.html'));
-});
-
-
-// Enable CORS for your frontend
-//app.use(cors({
-//  origin: 'http://localhost:5173' // Vite's default port
-//}));
-
-// Proxy endpoint for CVE data
+// API Routes
 app.get('/api/cve/:id', async (req, res) => {
   try {
-    const response = await axios.get(
-      `https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=${req.params.id}`
-    );
+    const response = await axios.get(`https://services.nvd.nist.gov/rest/json/cves/2.0?cveId=${req.params.id}`);
     res.json(response.data);
-  } catch (error) {nbhbg22wý``
-    console.error('Error fetching CVE data:', error);
+  } catch (error) {
+    console.error('Error fetching CVE:', error);
     res.status(500).json({ error: 'Failed to fetch CVE data' });
   }
 });
 
-// Proxy endpoint for CWE data
 app.get('/api/cwe/:id', async (req, res) => {
-  if (req.params.id.includes("noinfo")) {
-    console.info("noinfo for req.params.id: ", req.params.id);
-    res.status(404).json({ error: 'noinfoNo CWE data found for this ID' });
-    return;
-  }
   const url = `https://cwe.mitre.org/data/definitions/${req.params.id.replace("CWE-", "")}.html`;
+
   try {
-    const response = await axios.get(
-      url,
-      {
-        headers: {
-          'Accept': 'text/html'
-        }
-      }
-    );
-    
-    // Load the HTML into cheerio
+    if (req.params.id.includes("noinfo")) {
+       console.info("noinfo for req.params.id: ", req.params.id);
+       res.status(404).json({ error: 'noinfoNo CWE data found for this ID' });
+       return;
+    }
+    const response = await axios.get(url);
     const $ = cheerio.load(response.data);
     
-    // Extract data from the HTML
-    const transformedData = {
-      id: req.params.id,
-      name: $('h2').first().text().trim(),
-      description: $('div#Description .indent').text().trim(),
-      related_attack_patterns: [],
-      mitigations: [],
-      examples: []
-    };
+    const description = $('div#Description .indent').text().trim();
+    const name = $('h2').first().text().trim();
+    
 
+    const relatedAttackPatterns = [];
     // Extract related attack patterns
     $('div#Related_Attack_Patterns tr').each((i, elem) => {
       const text = $(elem).find('a').eq(0).text().trim();
       const capecMatch = text.match(/CAPEC-(\d+)/);
       if (capecMatch) {
-        transformedData.related_attack_patterns.push({
+        relatedAttackPatterns.push({
           id: capecMatch[1],
           description: text,
           url: url,
           attackpattern_name: $(elem).find('tr').find('td:last').text().trim()
         });
       }
-
     });
+
     // Extract mitigations
-    $('div#content div.mitigations ul li').each((i, elem) => {
-      transformedData.mitigations.push($(elem).text().trim());
+    const mitigations = [];
+    $('#Mitigations').next('ul').find('li').each((_, element) => {
+      mitigations.push($(element).text().trim());
     });
 
     // Extract examples
-    $('div#content div.examples ul li').each((i, elem) => {
-      transformedData.examples.push($(elem).text().trim());
+    const examples = [];
+    $('#Examples').next('ul').find('li').each((_, element) => {
+      examples.push($(element).text().trim());
     });
 
-    res.json(transformedData);
+    res.json({
+      id: req.params.id,
+      name: name,
+      description: description,
+      related_attack_patterns: relatedAttackPatterns,
+      mitigations: mitigations,
+      examples: examples
+    });
+
   } catch (error) {
-    console.error('Error fetching CWE data:', error);
+    console.error('Error fetching CWE:', error);
     res.status(500).json({ error: 'Failed to fetch CWE data' });
   }
 });
 
-// Proxy endpoint for CAPEC data
 app.get('/api/capec/:capecId', async (req, res) => {
   if (req.params.capecId.includes("noinfo")) {
     console.info("noinfo for req.params.capecId: ", req.params.capecId);
@@ -116,40 +92,60 @@ app.get('/api/capec/:capecId', async (req, res) => {
     return;
   }
   const url = `https://capec.mitre.org/data/definitions/${req.params.capecId.replace("CAPEC-", "")}.html`;
-  try {
-    // Fetch the CAPEC HTML page
-    const capecResponse = await axios.get(
-        url,
-        {
-          headers: {
-            'Accept': 'text/html'
-          }
-        }
-      );
-      
-      // Load the CAPEC HTML into cheerio
-      const $capec = cheerio.load(capecResponse.data);
-      
-      // Extract data from the HTML
-      const transformedData = {
-        id: req.params.capecId,
-        name: $capec('h2').first().text().trim(),
-        description: $capec('div#Description .indent').first().text().trim(),
-        url: url,
-        typical_severity: $capec('div#Typical_Severity p').first().text().trim(),
-        typical_likelihood_of_exploit: $capec('div#Likelihood_Of_Attack p').text().trim(),
-        execution_flow: [],
-        prerequisites: []
-      };
 
-      res.json(transformedData);
+  try {
+    const response = await axios.get(url);
+    const $capec = cheerio.load(response.data);
     
+    const name = $capec('h2').first().text().trim();
+    const description = $capec('div#Description .indent').first().text().trim();
+    const likelihoodOfAttack = $capec('div#Likelihood_Of_Attack .indent').first().text().trim();
+    const typicalSeverity = $capec('div#Typical_Severity .indent').first().text().trim();
+    const resourcesRequired = $capec('div#Resources_Required .indent').first().text().trim();
+    
+    console.log("typicalSeverity: ", typicalSeverity);
+    console.log("likelihoodOfAttack: ", likelihoodOfAttack);
+    console.log("resourcesRequired: ", resourcesRequired);
+    // Extract execution flow
+    const executionFlow = [];
+    $capec('div#Execution_Flow').next('ol').find('li').each((_, element) => {
+      executionFlow.push($(element).text().trim());
+    });
+    
+    // Extract prerequisites
+    const prerequisites = [];
+    $capec('div#Prerequisites').next('ul').find('li').each((_, element) => {
+      prerequisites.push($(element).text().trim());
+    });
+
+    res.json({
+      id: req.params.id,
+      name,
+      description,
+      typical_severity: typicalSeverity,
+      likelihood_of_attack: likelihoodOfAttack,
+      resources_required: resourcesRequired,
+      execution_flow: executionFlow,
+      prerequisites,
+      url: url,
+      attackpattern_name: name
+    });
   } catch (error) {
-    console.error('Error fetching CAPEC data:', error);
+    console.error('Error fetching CAPEC:', error);
     res.status(500).json({ error: 'Failed to fetch CAPEC data' });
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`Proxy server running on port ${PORT}`);
+// Serve static files in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, '../client/dist')));
+  
+  // Handle client-side routing
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+  });
+}
+
+app.listen(port, () => {
+  console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${port}`);
 }); 
