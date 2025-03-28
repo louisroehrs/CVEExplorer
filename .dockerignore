@@ -4,3 +4,8 @@
 .env
 Dockerfile
 fly.toml
+client/node_modules
+api/node_modules
+*.log
+dist
+
