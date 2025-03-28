@@ -2,16 +2,19 @@ const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
 const cheerio = require('cheerio');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Enable CORS for your frontend
-app.use(cors({
-  origin: 'http://localhost:5173' // Vite's default port
-}));
+// Enable CORS for development
+if (process.env.NODE_ENV !== 'production') {
+  app.use(cors({
+    origin: 'http://localhost:5173' // Vite's default port
+  }));
+}
 
-// Proxy endpoint for CVE data
+// API Routes
 app.get('/api/cve/:id', async (req, res) => {
   try {
     const response = await axios.get(
@@ -24,17 +27,10 @@ app.get('/api/cve/:id', async (req, res) => {
   }
 });
 
-// Proxy endpoint for CWE data
 app.get('/api/cwe/:id', async (req, res) => {
-  if (req.params.id.includes("noinfo")) {
-    console.info("noinfo for req.params.id: ", req.params.id);
-    res.status(404).json({ error: 'noinfoNo CWE data found for this ID' });
-    return;
-  }
-  const url = `https://cwe.mitre.org/data/definitions/${req.params.id.replace("CWE-", "")}.html`;
   try {
     const response = await axios.get(
-      url,
+      `https://cwe.mitre.org/data/definitions/${req.params.id}.html`,
       {
         headers: {
           'Accept': 'text/html'
@@ -48,27 +44,25 @@ app.get('/api/cwe/:id', async (req, res) => {
     // Extract data from the HTML
     const transformedData = {
       id: req.params.id,
-      name: $('h2').first().text().trim(),
-      description: $('div#Description .indent').text().trim(),
+      name: $('h1').first().text().trim(),
+      description: $('div#content div.description').text().trim(),
       related_attack_patterns: [],
       mitigations: [],
       examples: []
     };
 
     // Extract related attack patterns
-    $('div#Related_Attack_Patterns tr').each((i, elem) => {
-      const text = $(elem).find('a').eq(0).text().trim();
+    $('div#content div.related_attack_patterns ul li').each((i, elem) => {
+      const text = $(elem).text().trim();
       const capecMatch = text.match(/CAPEC-(\d+)/);
       if (capecMatch) {
         transformedData.related_attack_patterns.push({
           id: capecMatch[1],
-          description: text,
-          url: url,
-          attackpattern_name: $(elem).find('tr').find('td:last').text().trim()
+          description: text
         });
       }
-
     });
+
     // Extract mitigations
     $('div#content div.mitigations ul li').each((i, elem) => {
       transformedData.mitigations.push($(elem).text().trim());
@@ -86,18 +80,39 @@ app.get('/api/cwe/:id', async (req, res) => {
   }
 });
 
-// Proxy endpoint for CAPEC data
-app.get('/api/capec/:capecId', async (req, res) => {
-  if (req.params.capecId.includes("noinfo")) {
-    console.info("noinfo for req.params.capecId: ", req.params.capecId);
-    res.status(404).json({ error: 'noinfoNo CAPEC data found for this ID' });
-    return;
-  }
-  const url = `https://capec.mitre.org/data/definitions/${req.params.capecId.replace("CAPEC-", "")}.html`;
+app.get('/api/capec/:cweId', async (req, res) => {
   try {
-    // Fetch the CAPEC HTML page
-    const capecResponse = await axios.get(
-        url,
+    // First, get the CWE HTML page
+    const cweResponse = await axios.get(
+      `https://cwe.mitre.org/data/definitions/${req.params.cweId}.html`,
+      {
+        headers: {
+          'Accept': 'text/html'
+        }
+      }
+    );
+    
+    // Load the CWE HTML into cheerio
+    const $ = cheerio.load(cweResponse.data);
+    
+    // Find the Related Attack Patterns section
+    const relatedAttackPatterns = [];
+    $('div#content div.related_attack_patterns ul li').each((i, elem) => {
+      const text = $(elem).text().trim();
+      // Extract CAPEC ID from the text (format: CAPEC-XXX)
+      const capecMatch = text.match(/CAPEC-(\d+)/);
+      if (capecMatch) {
+        relatedAttackPatterns.push(capecMatch[1]);
+      }
+    });
+    
+    if (relatedAttackPatterns.length > 0) {
+      // Get the first CAPEC ID
+      const capecId = relatedAttackPatterns[0];
+      
+      // Fetch the CAPEC HTML page
+      const capecResponse = await axios.get(
+        `https://capec.mitre.org/data/definitions/${capecId}.html`,
         {
           headers: {
             'Accept': 'text/html'
@@ -110,24 +125,55 @@ app.get('/api/capec/:capecId', async (req, res) => {
       
       // Extract data from the HTML
       const transformedData = {
-        id: req.params.capecId,
-        name: $capec('h2').first().text().trim(),
-        description: $capec('div#Description .indent').first().text().trim(),
-        url: url,
-        typical_severity: $capec('div#Typical_Severity p').first().text().trim(),
-        typical_likelihood_of_exploit: $capec('div#Likelihood_Of_Attack p').text().trim(),
+        id: capecId,
+        name: $capec('h1').first().text().trim(),
+        description: $capec('div#content div.description').text().trim(),
+        typical_severity: $capec('div#content div.typical_severity').text().trim(),
+        typical_likelihood_of_exploit: $capec('div#content div.typical_likelihood_of_exploit').text().trim(),
+        resources_required: $capec('div#content div.resources_required').text().trim(),
         execution_flow: [],
         prerequisites: []
       };
 
+      // Extract execution flow steps
+      $capec('div#content div.execution_flow ul li').each((i, elem) => {
+        transformedData.execution_flow.push($capec(elem).text().trim());
+      });
+
+      // Extract prerequisites
+      $capec('div#content div.prerequisites ul li').each((i, elem) => {
+        transformedData.prerequisites.push($capec(elem).text().trim());
+      });
+
+      // Clean up empty arrays
+      if (transformedData.execution_flow.length === 0) {
+        transformedData.execution_flow = [];
+      }
+      if (transformedData.prerequisites.length === 0) {
+        transformedData.prerequisites = [];
+      }
+      
       res.json(transformedData);
-    
+    } else {
+      res.status(404).json({ error: 'No CAPEC data found for this CWE' });
+    }
   } catch (error) {
     console.error('Error fetching CAPEC data:', error);
     res.status(500).json({ error: 'Failed to fetch CAPEC data' });
   }
 });
 
+// Serve static files in production
+if (process.env.NODE_ENV === 'production') {
+  // Serve static files from the client/dist directory
+  app.use(express.static(path.join(__dirname, '../client/dist')));
+
+  // Handle client-side routing
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+  });
+}
+
 app.listen(PORT, () => {
-  console.log(`Proxy server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV || 'development'} mode`);
 }); 

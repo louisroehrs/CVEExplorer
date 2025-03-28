@@ -1,15 +1,13 @@
 # CVE Explorer
 
-A modern web application that provides comprehensive information about Common Vulnerabilities and Exposures (CVEs), including related CWEs, CAPECs, and CVSS scoring.
+A web application for exploring CVE (Common Vulnerabilities and Exposures) information with CAPEC (Common Attack Pattern Enumeration and Classification) integration.
 
 ## Features
 
-- Search for CVE information by ID
-- Display detailed CVE descriptions
-- Show CVSS v3 scores and severity levels
-- List related Common Weakness Enumerations (CWEs)
-- Provide reference links for further reading
-- Modern, responsive UI with TailwindCSS
+- Search and view CVE details
+- View related CWE (Common Weakness Enumeration) information
+- View related CAPEC attack patterns
+- Modern, responsive UI built with React and TailwindCSS
 
 ## Prerequisites
 
@@ -24,17 +22,50 @@ git clone <repository-url>
 cd cveexplorer
 ```
 
-2. Install dependencies:
+2. Install dependencies for both client and server:
 ```bash
-npm install
+npm run install-all
 ```
 
-3. Start the development server:
+## Development
+
+To run the application in development mode with hot-reloading:
+
 ```bash
 npm run dev
 ```
 
-4. Open your browser and navigate to `http://localhost:5173`
+This will start:
+- Frontend development server at http://localhost:5173
+- Backend API server at http://localhost:3001
+
+## Production
+
+To build and run the application in production mode:
+
+1. Build the frontend:
+```bash
+npm run build
+```
+
+2. Start the production server:
+```bash
+npm start
+```
+
+The application will be available at http://localhost:3001
+
+## Project Structure
+
+- `/client` - Frontend React application
+- `/backend` - Express.js API server
+- `/client/dist` - Built frontend files (generated during build)
+
+## API Endpoints
+
+- `GET /api/cve/:id` - Get CVE details
+- `GET /api/cwe/:id` - Get CWE details
+- `GET /api/capec/:id` - Get CAPEC details
 
 ## Usage
 
