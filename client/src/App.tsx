@@ -48,7 +48,7 @@ interface CAPEC {
   name: string;
   description: string;
   typical_severity: string;
-  typical_likelihood_of_exploit: string;
+  likelihood_of_attack : string;
   resources_required: string;
   execution_flow: string[];
   prerequisites: string[];
@@ -56,8 +56,10 @@ interface CAPEC {
   attackpattern_name: string;
 }
 
+const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
+
 function App() {
-  const [cveId, setCveId] = useState('')
+  const [cveId, setCveId] = useState('CVE-2024-0001')
   const [cveData, setCveData] = useState<CVE | null>(null)
   const [cweData, setCweData] = useState<CWE[]>([])
   const [loading, setLoading] = useState(false)
@@ -66,7 +68,7 @@ function App() {
 
   const fetchCWE = async (cweId: string) => {
     try {
-      const response = await axios.get(`https://cveexplorer.fly.dev/api/cwe/${cweId}`)
+      const response = await axios.get(`${API_BASE_URL}/api/cwe/${cweId}`)
       if (response.data) {
         setCweData(prev => [...prev, response.data])
       }
@@ -78,7 +80,7 @@ function App() {
   
   const fetchCAPEC = async (capecId: string) => {
     try {
-      const response = await axios.get(`https://cveexplorer.fly.dev/api/capec/${capecId}`)
+      const response = await axios.get(`${API_BASE_URL}/api/capec/${capecId}`)
       if (response.data) {
         setCapecData(prev => ({
           ...prev,
@@ -99,7 +101,7 @@ function App() {
     setCapecData({})
     
     try {
-      const response = await axios.get(`https://cveexplorer.fly.dev/api/cve/${cveId}`)
+      const response = await axios.get(`${API_BASE_URL}/api/cve/${cveId}`)
       if (response.data.vulnerabilities && response.data.vulnerabilities.length > 0) {
         setCveData(response.data.vulnerabilities[0].cve)
         // Fetch CAPEC data for each CWE
@@ -140,7 +142,7 @@ function App() {
           <div className="flex gap-4">
             <input
               type="text"
-              value={cveId}
+              value={cveId} 
               onChange={(e) => setCveId(e.target.value.toUpperCase())}
               placeholder="Enter CVE ID (e.g., CVE-2024-0001)"
               className="flex-1 px-6 py-3 border-2 border-blue-100 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
@@ -223,7 +225,8 @@ function App() {
                                     <p><a href={capecData[pattern.id].url} target="_blank" rel="noopener noreferrer"><b>{capecData[pattern.id].name}</b></a></p>
                                     <p><span className="font-medium">Description:</span> {capecData[pattern.id].description}</p>
                                     <p><span className="font-medium">Severity:</span> {capecData[pattern.id].typical_severity}</p>
-                                    <p><span className="font-medium">Likelihood:</span> {capecData[pattern.id].typical_likelihood_of_exploit}</p>
+                                    <p><span className="font-medium">Likelihood:</span> {capecData[pattern.id].likelihood_of_attack}</p>
+                                    <p><span className="font-medium">Resources Required:</span> {capecData[pattern.id].resources_required}</p>
                                     {capecData[pattern.id].prerequisites.length > 0 && (
                                       <div>
                                         <span className="font-medium">Prerequisites:</span>
