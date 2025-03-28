@@ -23,23 +23,28 @@ RUN apt-get update -qq && \
 # Install node modules
 COPY package-lock.json package.json ./
 RUN npm ci --include=dev
+RUN npm install -g typescript
 
 # Copy application code
 COPY . .
 
+WORKDIR /app/client
+RUN npm install
 # Build application
 RUN npm run build
 
 # Remove development dependencies
 RUN npm prune --omit=dev
 
+WORKDIR /app
 
 # Final stage for app image
-FROM nginx
+FROM node:${NODE_VERSION}-slim AS production
 
 # Copy built application
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=builder /app/api ./
+COPY --from=builder /app/dist ./dist
 
 # Start the server by default, this can be overwritten at runtime
 EXPOSE 80
-CMD [ "/usr/sbin/nginx", "-g", "daemon off;" ]
+CMD [ "node", "server.js" ]
