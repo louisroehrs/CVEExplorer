@@ -8,7 +8,7 @@ WORKDIR /app
 ENV NODE_ENV="production"
 
 # ========== Builder ==========
-FROM base AS builder
+FROM base AS frontend-builder
 
 # Install build tools
 RUN apt-get update -qq && \
@@ -28,6 +28,7 @@ RUN npm run build
 # -----------------------------
 # Install backend dependencies
 # -----------------------------
+FROM base AS backend-builder    
 WORKDIR /app/api
 COPY api/package*.json ./
 RUN npm ci
@@ -36,14 +37,14 @@ RUN npm ci
 COPY api ./
 
 # Copy built frontend into backend
-COPY --from=builder /app/client/dist /app/api/dist
+COPY --from=frontend-builder /app/client/dist /app/api/dist
 
 # ========== Final Stage ==========
 FROM node:${NODE_VERSION}-slim AS production
 WORKDIR /app
 
 # Copy backend + built UI from builder
-COPY --from=builder /app/api ./
+COPY --from=backend-builder /app/api ./
 
 EXPOSE 80
 CMD ["node", "server.js"]

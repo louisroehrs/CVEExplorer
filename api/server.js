@@ -102,10 +102,7 @@ app.get('/api/capec/:capecId', async (req, res) => {
     const likelihoodOfAttack = $capec('div#Likelihood_Of_Attack .indent').first().text().trim();
     const typicalSeverity = $capec('div#Typical_Severity .indent').first().text().trim();
     const resourcesRequired = $capec('div#Resources_Required .indent').first().text().trim();
-    
-    console.log("typicalSeverity: ", typicalSeverity);
-    console.log("likelihoodOfAttack: ", likelihoodOfAttack);
-    console.log("resourcesRequired: ", resourcesRequired);
+
     // Extract execution flow
     const executionFlow = [];
     $capec('div#Execution_Flow').next('ol').find('li').each((_, element) => {
