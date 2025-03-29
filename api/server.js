@@ -16,6 +16,16 @@ if (process.env.NODE_ENV !== 'production') {
   app.use(cors());
 }
 
+// Serve static files in production
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, 'dist')));
+  
+  // Handle client-side routing
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist','index.html'));
+  });
+}
+
 // API Routes
 app.get('/api/cve/:id', async (req, res) => {
   try {
@@ -133,15 +143,7 @@ app.get('/api/capec/:capecId', async (req, res) => {
   }
 });
 
-// Serve static files in production
-if (process.env.NODE_ENV === 'production') {
-  app.use(express.static(path.join(__dirname, '../client/dist')));
-  
-  // Handle client-side routing
-  app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, '../client/dist/index.html'));
-  });
-}
+
 
 app.listen(port, () => {
   console.log(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${port}`);

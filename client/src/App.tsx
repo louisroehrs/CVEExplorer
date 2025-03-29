@@ -135,8 +135,8 @@ function App() {
   return (
     <Router>
       <div className="min-h-screen bg-gray-100">
-        <nav className="bg-white shadow-lg ">
-          <div className="max-w-7xl mx-auto px-4 fixed top-0 left-0">
+        <nav className="py-8">
+          <div className="w-full bg-white mx-auto shadow-lg px-4 fixed top-0 left-0">
             <div className="flex justify-between h-16">
               <div className="flex">
                 <div className="flex-shrink-0 flex items-center">
@@ -149,14 +149,14 @@ function App() {
           </div>
         </nav>
 
-        <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+        <main className="max-w-screen">
           <Routes>
             <Route path="/terms" element={<TermsAndConditions />} />
             <Route path="/" element={
               <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
                 <div className="max-w-5xl mx-auto px-4 py-8">
                   <div className="text-center mb-12">
-                    <h1 className="text-5xl font-bold text-blue-900 mb-4">CVE Explorer</h1>
+                    <h1 className="text-5xl font-bold text-blue-900 mb-4"></h1>
                     <p className="text-blue-600 text-lg">Search and explore Common Vulnerabilities and Exposures</p>
                   </div>
                   

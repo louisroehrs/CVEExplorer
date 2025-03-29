@@ -44,8 +44,9 @@ RUN npm ci --omit=dev
 # Copy backend code
 COPY api ./
 
+
 # Copy built frontend into backend
-COPY --from=frontend-builder /app/client/dist /app/api/dist
+COPY --from=frontend-builder /app/dist /app/api/dist
 
 # ========== Final Stage ==========
 FROM node:${NODE_VERSION}-slim AS production
