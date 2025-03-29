@@ -193,20 +193,20 @@ function App() {
                           <h2 className="text-3xl font-bold text-blue-900">
                             <a href={`https://nvd.nist.gov/vuln/detail/${cveData.id}`} target="_blank" > {cveData.id}</a>
                           </h2>
-                          <div className="px-4 py-2 rounded-lg font-medium">
+                          
                           {
                           cveData.metrics.cvssMetricV31[0].cvssData.baseSeverity.includes('HIGH') 
                           || 
                           cveData.metrics.cvssMetricV31[0].cvssData.baseSeverity.includes('CRITICAL') ? (
-                            <span className="bg-red-50 text-red-700">
+                            <span className="bg-red-50 text-red-700 px-4 py-2 rounded-lg font-medium">
                             {cveData.metrics.cvssMetricV31[0].cvssData.baseSeverity}
                             </span>
                           ) : (
-                            <span className="bg-blue-50 text-blue-700">
+                            <span className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-medium">
                             {cveData.metrics.cvssMetricV31[0].cvssData.baseSeverity}
                             </span>
                           )}
-                          </div>
+
                         </div>
                         
                         <div className="mb-8">
