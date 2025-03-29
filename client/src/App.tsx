@@ -227,7 +227,7 @@ function App() {
                                   Source: {metric.source}
                                 </div>
                                 <div className="text-sm col-span-2 text-blue-600">
-                                  <a href={`https://nvd.nist.gov/vuln-metrics/cvss/v3-calculator?name=${cveData.id}&vector=${metric.cvssData.vectorString}&version=3.1&source=NIST`} target="_blank" > CVSS for {cveData.id}</a>
+                                  <a href={`https://nvd.nist.gov/vuln-metrics/cvss/v3-calculator?name=${cveData.id}&vector=${metric.cvssData.vectorString.replace('CVSS:3.1/', '')}&version=3.1&source=NIST`} target="_blank" > CVSS for {cveData.id}</a>
                                 </div>
 
                                 {index < cveData.metrics.cvssMetricV31.length - 1 && (
