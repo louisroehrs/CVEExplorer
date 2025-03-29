@@ -138,13 +138,13 @@ function App() {
         <nav className="py-8">
           <div className="w-full bg-white mx-auto shadow-lg px-4 fixed top-0 left-0">
             <div className="flex justify-between h-24">
-              <div className="flex">
-                <div className="flex-shrink-0 flex items-center">
+                <div className="flex flex-row justify-between w-full items-center">
                   <Link to="/" className="text-xl font-bold text-gray-800">
                     <h2 className="text-2xl font-bold text-blue-800">CVEExplorer</h2>
                   </Link>
+                  <p className="text-blue-600 text-2xl font-bold text-right left-48">Search and explore Common Vulnerabilities and Exposures</p>
+                  <div></div>
                 </div>
-              </div>
             </div>
           </div>
         </nav>
@@ -154,17 +154,19 @@ function App() {
             <Route path="/terms" element={<TermsAndConditions />} />
             <Route path="/" element={
               <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-                <div className="max-w-5xl mx-auto px-4 py-8">
-                  <div className="text-center mb-12">
-                    <p className="text-blue-600 text-2xl font-bold">Search and explore Common Vulnerabilities and Exposures</p>
-                  </div>
-                  
-                  <div id="scroller" className="bg-white rounded-xl shadow-lg p-4 ml-40 mb-8 sticky top-2 z-10">
+                <div className="max-w-5xl mx-auto px-4 py-4">
+                  <div className="text-center mb-12"></div>
+                  <div className="bg-white rounded-xl shadow-lg p-4 ml-40 mb-8 sticky top-2 z-10">
                     <div className="flex gap-4">
                       <input
                         type="text"
                         value={cveId} 
                         onChange={(e) => setCveId(e.target.value.toUpperCase())}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            searchCVE()
+                          }
+                        }}
                         placeholder="Enter CVE ID (e.g., CVE-2024-0001)"
                         className="flex-1 px-6 py-3 border-2 border-blue-100 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
                       />
@@ -191,8 +193,19 @@ function App() {
                           <h2 className="text-3xl font-bold text-blue-900">
                             <a href={`https://nvd.nist.gov/vuln/detail/${cveData.id}`} target="_blank" > {cveData.id}</a>
                           </h2>
-                          <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-medium">
+                          <div className="px-4 py-2 rounded-lg font-medium">
+                          {
+                          cveData.metrics.cvssMetricV31[0].cvssData.baseSeverity.includes('HIGH') 
+                          || 
+                          cveData.metrics.cvssMetricV31[0].cvssData.baseSeverity.includes('CRITICAL') ? (
+                            <span className="bg-red-50 text-red-700">
                             {cveData.metrics.cvssMetricV31[0].cvssData.baseSeverity}
+                            </span>
+                          ) : (
+                            <span className="bg-blue-50 text-blue-700">
+                            {cveData.metrics.cvssMetricV31[0].cvssData.baseSeverity}
+                            </span>
+                          )}
                           </div>
                         </div>
                         
