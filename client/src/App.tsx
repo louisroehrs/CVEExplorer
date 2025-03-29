@@ -58,10 +58,10 @@ interface CAPEC {
   attackpattern_name: string;
 }
 
-const API_BASE_URL = ''; //import.meta.env.PROD ? '' : 'http://localhost:3001';
+const API_BASE_URL = '';
 
 function App() {
-  const [cveId, setCveId] = useState('CVE-2024-0001')
+  const [cveId, setCveId] = useState('')
   const [cveData, setCveData] = useState<CVE | null>(null)
   const [cweData, setCweData] = useState<CWE[]>([])
   const [loading, setLoading] = useState(false)
@@ -137,11 +137,11 @@ function App() {
       <div className="min-h-screen bg-gray-100">
         <nav className="py-8">
           <div className="w-full bg-white mx-auto shadow-lg px-4 fixed top-0 left-0">
-            <div className="flex justify-between h-16">
+            <div className="flex justify-between h-24">
               <div className="flex">
                 <div className="flex-shrink-0 flex items-center">
                   <Link to="/" className="text-xl font-bold text-gray-800">
-                    <h2 className="text-2xl font-bold text-blue-800">CVE Explorer</h2>
+                    <h2 className="text-2xl font-bold text-blue-800">CVEExplorer</h2>
                   </Link>
                 </div>
               </div>
@@ -156,12 +156,10 @@ function App() {
               <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
                 <div className="max-w-5xl mx-auto px-4 py-8">
                   <div className="text-center mb-12">
-                    <h1 className="text-5xl font-bold text-blue-900 mb-4"></h1>
-                    <p className="text-blue-600 text-lg">Search and explore Common Vulnerabilities and Exposures</p>
-                    <p>Mode {API_BASE_URL}</p>
+                    <p className="text-blue-600 text-2xl font-bold">Search and explore Common Vulnerabilities and Exposures</p>
                   </div>
                   
-                  <div className="bg-white rounded-xl shadow-lg p-6 mb-8 sticky top-4 z-10">
+                  <div id="scroller" className="bg-white rounded-xl shadow-lg p-4 ml-40 mb-8 sticky top-2 z-10">
                     <div className="flex gap-4">
                       <input
                         type="text"
@@ -226,7 +224,6 @@ function App() {
                             ))}
                           </div>
                         </div>
-
                         {cveData.weaknesses && cveData.weaknesses.length > 0 && (
                           <div className="mb-8">
                             <h3 className="text-xl font-semibold text-blue-800 mb-4">Related CWEs</h3>
