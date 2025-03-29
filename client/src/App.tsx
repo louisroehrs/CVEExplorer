@@ -58,7 +58,7 @@ interface CAPEC {
   attackpattern_name: string;
 }
 
-const API_BASE_URL = import.meta.env.PROD ? '' : 'http://localhost:3001';
+const API_BASE_URL = ''; //import.meta.env.PROD ? '' : 'http://localhost:3001';
 
 function App() {
   const [cveId, setCveId] = useState('CVE-2024-0001')
@@ -122,7 +122,7 @@ function App() {
           }
         }
       } else {
-        setError('CVE not found')
+        setError('CVE not found ' + JSON.stringify(response));
       }
     } catch (err) {
       setError('Error fetching CVE data')
@@ -158,6 +158,7 @@ function App() {
                   <div className="text-center mb-12">
                     <h1 className="text-5xl font-bold text-blue-900 mb-4"></h1>
                     <p className="text-blue-600 text-lg">Search and explore Common Vulnerabilities and Exposures</p>
+                    <p>Mode {API_BASE_URL}</p>
                   </div>
                   
                   <div className="bg-white rounded-xl shadow-lg p-6 mb-8 sticky top-4 z-10">
