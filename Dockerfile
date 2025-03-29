@@ -10,6 +10,9 @@ ENV NODE_ENV="production"
 # ========== Builder ==========
 FROM base AS frontend-builder
 
+# 👇 Ensure dev dependencies are installed
+ENV NODE_ENV=development
+
 # Install build tools
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3
@@ -29,6 +32,10 @@ RUN npm run build
 # Install backend dependencies
 # -----------------------------
 FROM base AS backend-builder    
+
+# 👇 Ensure dev dependencies are installed
+ENV NODE_ENV=production
+
 WORKDIR /app/api
 COPY api/package*.json ./
 RUN npm ci
@@ -42,6 +49,8 @@ COPY --from=frontend-builder /app/client/dist /app/api/dist
 # ========== Final Stage ==========
 FROM node:${NODE_VERSION}-slim AS production
 WORKDIR /app
+
+RUN npm ci --omit=dev
 
 # Copy backend + built UI from builder
 COPY --from=backend-builder /app/api ./
