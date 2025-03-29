@@ -8,6 +8,13 @@ primary_region = 'lax'
 
 [build]
 
+
+[env]
+  PUBLIC_SITE_NAME = "CVE Explorer"
+  NODE_ENV = "production"
+  PORT = 80
+
+
 [http_service]
   internal_port = 80
   force_https = true
