@@ -138,13 +138,13 @@ function App() {
         <nav className="py-8">
           <div className="w-full bg-white mx-auto shadow-lg px-4 fixed top-0 left-0">
             <div className="flex justify-between h-24">
-              <div className="flex">
-                <div className="flex-shrink-0 flex items-center">
+                <div className="flex flex-row justify-between w-full items-center">
                   <Link to="/" className="text-xl font-bold text-gray-800">
                     <h2 className="text-2xl font-bold text-blue-800">CVEExplorer</h2>
                   </Link>
+                  <p className="text-blue-600 text-2xl font-bold text-right left-48">Search and explore Common Vulnerabilities and Exposures</p>
+                  <div></div>
                 </div>
-              </div>
             </div>
           </div>
         </nav>
@@ -154,12 +154,9 @@ function App() {
             <Route path="/terms" element={<TermsAndConditions />} />
             <Route path="/" element={
               <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-                <div className="max-w-5xl mx-auto px-4 py-8">
-                  <div className="text-center mb-12">
-                    <p className="text-blue-600 text-2xl font-bold">Search and explore Common Vulnerabilities and Exposures</p>
-                  </div>
-                  
-                  <div id="scroller" className="bg-white rounded-xl shadow-lg p-4 ml-40 mb-8 sticky top-2 z-10">
+                <div className="max-w-5xl mx-auto px-4 py-4">
+                  <div className="text-center mb-12"></div>
+                  <div className="bg-white rounded-xl shadow-lg p-4 ml-40 mb-8 sticky top-2 z-10">
                     <div className="flex gap-4">
                       <input
                         type="text"
