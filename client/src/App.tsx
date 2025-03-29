@@ -162,6 +162,11 @@ function App() {
                         type="text"
                         value={cveId} 
                         onChange={(e) => setCveId(e.target.value.toUpperCase())}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            searchCVE()
+                          }
+                        }}
                         placeholder="Enter CVE ID (e.g., CVE-2024-0001)"
                         className="flex-1 px-6 py-3 border-2 border-blue-100 rounded-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
                       />
@@ -188,8 +193,19 @@ function App() {
                           <h2 className="text-3xl font-bold text-blue-900">
                             <a href={`https://nvd.nist.gov/vuln/detail/${cveData.id}`} target="_blank" > {cveData.id}</a>
                           </h2>
-                          <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg font-medium">
+                          <div className="px-4 py-2 rounded-lg font-medium">
+                          {
+                          cveData.metrics.cvssMetricV31[0].cvssData.baseSeverity.includes('HIGH') 
+                          || 
+                          cveData.metrics.cvssMetricV31[0].cvssData.baseSeverity.includes('CRITICAL') ? (
+                            <span className="bg-red-50 text-red-700">
                             {cveData.metrics.cvssMetricV31[0].cvssData.baseSeverity}
+                            </span>
+                          ) : (
+                            <span className="bg-blue-50 text-blue-700">
+                            {cveData.metrics.cvssMetricV31[0].cvssData.baseSeverity}
+                            </span>
+                          )}
                           </div>
                         </div>
                         
