@@ -38,7 +38,8 @@ ENV NODE_ENV=production
 
 WORKDIR /app/api
 COPY api/package*.json ./
-RUN npm ci
+
+RUN npm ci --omit=dev
 
 # Copy backend code
 COPY api ./
@@ -50,7 +51,6 @@ COPY --from=frontend-builder /app/client/dist /app/api/dist
 FROM node:${NODE_VERSION}-slim AS production
 WORKDIR /app
 
-RUN npm ci --omit=dev
 
 # Copy backend + built UI from builder
 COPY --from=backend-builder /app/api ./
